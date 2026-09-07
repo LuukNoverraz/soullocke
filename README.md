@@ -138,6 +138,9 @@ Add a **Browser** source with:
 |---|---|---|
 | `?female=true` | `?female=true` | Shows female variant sprites |
 | `?art=home` | `?art=home` | Uses PokeAPI "home" artwork instead of "official-artwork" |
+| `?lang=de` | `?lang=de` | Accept German species names alongside English names |
+| `?layout=vertical` | `?layout=vertical` | Stack circles vertically along the left edge |
+| `?reverse=true` | `?reverse=true` | Reverse the order of the displayed circles |
 | `?font=FontName` | `?font=Press+Start+2P` | Replace default font with any Google Font (spaces become `+`) |
 | `?gen=1-5` | `?gen=1-5` | Use Gen 1-5 type assignments (e.g. Clefairy shows Normal instead of Fairy) |
 | `?font-weight=...` | `?font=Rubik&font-weight=300;400;600;700` | Font weights to load (semicolon-separated, default `400;600;700`) |
@@ -149,6 +152,40 @@ Some Pokemon had their types changed in Generation 6 (e.g. Clefairy went from No
 To use **pre-Gen-6 typing** instead, add `?gen=1-5` to your overlay URL. The overlay will look up the `past_types` data from PokeAPI and use the type assignment from Generations 1-5.
 
 You can also select this from the **Typing** dropdown on the setup page (right of the "Load Example" button).
+
+### German Names and Left-Side Layout
+
+Enable **German Pokémon names**, **Vertical layout (left side)**, or
+**Reverse circle order** under **Customize your overlay**. These toggles are
+saved in your browser and included in copied overlay links. Copy the updated
+link into OBS after changing options; team edits continue to sync as before.
+The setup page also accepts `lang`, `layout`, and `reverse` parameters,
+which override saved preferences when opening that page.
+
+With `lang=de`, enter German species such as `Bisasam`, `Glumanda`,
+or `Schiggy`, or keep using English names such as `Mr. Mime`.
+Nicknames remain exactly as entered. English species names, `(Shiny)`,
+Solo and Soul Link entries, artwork choices, and generation typing still work.
+Regional forms accept German prefixes such as `Alola-Raichu`,
+`Galar-Pantimos`, and `Hisui-Zorua`. Other forms use the PokeAPI form suffix,
+for example `Deoxys-attack`.
+
+The bundled German names come from [PokeAPI's species names](https://github.com/PokeAPI/pokeapi/blob/master/data/v2/csv/pokemon_species_names.csv).
+Refresh them with `pwsh -File scripts/update-german-names.ps1`.
+Name translation needs no additional network requests at runtime.
+
+`layout=vertical` places the circles in a left-aligned column. Use a tall OBS
+Browser Source (for example 300 × 1080 for six circles), then scale and position
+the source in OBS to fit your scene. A shorter source can scroll its contents
+through OBS's Interact window. The default horizontal layout is unchanged.
+
+`reverse=true` reverses the selected team after applying **Max Pokémon**.
+It works with both layouts and keeps Soul Link partners together without
+mirroring artwork or text. Combine options with `&`, for example:
+
+```text
+/overlay.html?lang=de&layout=vertical&reverse=true
+```
 
 ### Pokemon Name Normalization
 

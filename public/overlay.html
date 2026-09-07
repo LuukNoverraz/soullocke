@@ -107,6 +107,29 @@
       display: none;
     }
 
+    /* Left-edge stack for a tall OBS browser source. No mirroring. */
+    #overlay.vertical {
+      top: 0;
+      bottom: 0;
+      right: auto;
+      width: auto;
+      padding: 16px;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    #overlay.vertical #pairs-container {
+      flex-direction: column;
+      width: auto;
+      max-height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+      justify-content: flex-start;
+      padding: 24px 40px;
+      margin: 0;
+      transform: none;
+    }
+
     /* ============================================================
        PAIR CIRCLE - the "O" containing a duo
        ============================================================ */
@@ -426,6 +449,7 @@
 
   </div>
 
+  <script src="/pokemon-names-de.js"></script>
   <script>
     // ============================================================
     //  Nuzlocke Overlay - OBS Browser Source
@@ -467,6 +491,9 @@
 
     /** @const {boolean} Show female variant sprites */
     const FEMALE = urlParams.get('female') === 'true';
+
+    const GERMAN_NAMES = urlParams.get('lang') === 'de';
+    const REVERSE_ORDER = urlParams.get('reverse') === 'true';
 
     /**
      * Generation mode for type lookups.
@@ -527,6 +554,7 @@
     const errorMessage = document.getElementById('errorMessage');
     const emptyEl = document.getElementById('empty');
     const pairsContainer = document.getElementById('pairs-container');
+    overlayEl.classList.toggle('vertical', urlParams.get('layout') === 'vertical');
 
     // ============================================================
     //  SPRITE & TYPE LOOKUPS
@@ -584,8 +612,13 @@
      * @param {string} name - Raw species name (lowercased, no "(Shiny)" suffix).
      * @returns {string} Normalized name ready for PokeAPI.
      */
-    function normalizePokemonName(name) {
+    function normalizePokemonName(name, translate = GERMAN_NAMES) {
       let n = name.toLowerCase().trim();
+
+      // German regional names use prefixes such as "Alola-Raichu".
+      if (translate) {
+        n = n.replace(/^(alola|galar|hisui|paldea)[-\s]+(.+)$/, '$2-$1');
+      }
 
       // Handle regional forms: "galarian mr. mime" -> "mr-mime-galar"
       const regionMap = {
@@ -625,8 +658,22 @@
       // Strip leading/trailing hyphens
       n = n.replace(/^-|-$/g, '');
 
+      if (translate) {
+        // Match complete species names first, then preserve form suffixes.
+        const exact = germanNameMap.get(n);
+        if (exact) return exact.defaultSlug;
+        for (const [german, entry] of germanNameMap) {
+          if (n.startsWith(german + '-')) {
+            return entry.slug + n.slice(german.length);
+          }
+        }
+      }
       return n;
     }
+
+    const germanNameMap = new Map(GERMAN_POKEMON_NAMES.map(([name, slug, defaultSlug]) =>
+      [normalizePokemonName(name, false), { slug, defaultSlug }]
+    ).sort((a, b) => b[0].length - a[0].length));
 
     /**
      * Parse a species name, detecting an optional "(Shiny)" suffix
@@ -1103,6 +1150,9 @@
       if (maxPairs > 0 && pairs.length > maxPairs) {
         pairs = pairs.slice(0, maxPairs);
       }
+
+      // Reverse only the selected team; keep partners and artwork intact.
+      if (REVERSE_ORDER) pairs = pairs.slice().reverse();
 
       // Batch resolve dex IDs and type colors.
       const dexPromises = [];

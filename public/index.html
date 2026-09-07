@@ -700,9 +700,26 @@ Starly & Bidoof"></textarea>
             <input type="checkbox" id="param-home" />
             HOME art
           </label>
+          <label class="toggle-item">
+            <input type="checkbox" id="param-german" />
+            German Pokémon names
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" id="param-reverse" />
+            Reverse circle order
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" id="param-vertical" />
+            Vertical layout (left side)
+          </label>
         </div>
       </div>
     </div>
+    <p class="step-desc" style="margin-top:12px;">
+      Enable German names to enter species such as Bisasam and Glumanda; nicknames stay as entered.
+      Vertical layout stacks circles on the left. Reverse changes the order of the displayed team.
+      After changing options, copy the updated link into OBS.
+    </p>
   </div>
 
   <!-- ============================================================
@@ -739,6 +756,7 @@ Starly & Bidoof"></textarea>
       In OBS, add a new <strong>Browser</strong> source. Paste the copied URL.
       You can set the width and height to any size. For best results, use your full stream canvas
       dimensions (e.g. 1920x1080) to cover the bottom of the screen.
+      For vertical layout, try a tall source (e.g. 300x1080) and position it on the left.
       Enable <strong>"Refresh browser when scene becomes active"</strong>.
     </div>
   </div>
@@ -775,7 +793,10 @@ Piplup (Shiny)         <span class="comment-hint">shows shiny sprite</span></pre
       </p>
       <pre><code>?font=FontName</code>   Load a Google Font (e.g. <code>?font=Press+Start+2P</code>)
 <code>?art=home</code>       Use Pokemon HOME HD sprites instead of default
-<code>?gen=1-5</code>       Use Gen 1-5 typing (e.g. Clefairy = Normal instead of Fairy)</pre>
+<code>?gen=1-5</code>       Use Gen 1-5 typing (e.g. Clefairy = Normal instead of Fairy)
+<code>?lang=de</code>       Accept German Pokémon species names (English still works)
+<code>?layout=vertical</code> Stack circles along the left edge
+<code>?reverse=true</code>  Reverse the displayed circle order</pre>
 
       <p class="step-desc" style="margin-top:12px;">
         <strong>Name normalization:</strong> Type names naturally &mdash; the overlay handles the rest.
@@ -816,6 +837,9 @@ Piplup (Shiny)         <span class="comment-hint">shows shiny sprite</span></pre
   const themeToggle = document.getElementById('theme-toggle');
   const paramFont = document.getElementById('param-font');
   const paramHome = document.getElementById('param-home');
+  const paramGerman = document.getElementById('param-german');
+  const paramReverse = document.getElementById('param-reverse');
+  const paramVertical = document.getElementById('param-vertical');
   const paramTyping = document.getElementById('param-typing');
   const paramMax = document.getElementById('param-max');
 
@@ -1008,6 +1032,10 @@ Geodude & Psyduck`;
       parts.push('art=home');
     }
 
+    if (paramGerman.checked) parts.push('lang=de');
+    if (paramReverse.checked) parts.push('reverse=true');
+    if (paramVertical.checked) parts.push('layout=vertical');
+
     // Typing generation param
     const typing = paramTyping.value;
     if (typing !== 'gen6') {
@@ -1129,6 +1157,23 @@ Geodude & Psyduck`;
   paramHome.addEventListener('change', updateUrlDisplay);
   paramTyping.addEventListener('change', updateUrlDisplay);
   paramMax.addEventListener('input', updateUrlDisplay);
+
+  // Explicit setup URL parameters override saved preferences.
+  const setupParams = new URLSearchParams(window.location.search);
+  for (const [control, param, enabledValue] of [
+    [paramGerman, 'lang', 'de'],
+    [paramReverse, 'reverse', 'true'],
+    [paramVertical, 'layout', 'vertical'],
+  ]) {
+    const storageKey = 'nuzlocke-option-' + param;
+    control.checked = setupParams.has(param)
+      ? setupParams.get(param) === enabledValue
+      : localStorage.getItem(storageKey) === 'true';
+    control.addEventListener('change', () => {
+      localStorage.setItem(storageKey, String(control.checked));
+      updateUrlDisplay();
+    });
+  }
 
   // ============================================================
   //  INIT
